@@ -1,0 +1,44 @@
+{
+  "name": "scraper-lib",
+  "version": "1.0.0",
+  "description": "Node.js web scraper library and utility.",
+  "main": "./dist/scraper.js",
+  "types": "./dist/scraper.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/scraper.js",
+      "types": "./dist/scraper.d.ts"
+    }
+  },
+  "keywords": [
+    "scraper",
+    "webscraper",
+    "utility",
+    "node.js"
+  ],
+  "author": "janstaffa",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/command-line-args": "^5.2.3",
+    "@types/node": "^25.5.2",
+    "eslint": "^10.2.0",
+    "prettier": "^3.8.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "command-line-args": "^6.0.2",
+    "dotenv": "^17.4.1",
+    "puppeteer": "^24.40.0"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "puppeteer@24.40.0": true
+  }
+}

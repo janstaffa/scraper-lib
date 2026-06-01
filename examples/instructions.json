@@ -1,0 +1,25 @@
+{
+  "srcs": [
+    {
+      "url": "https://www.prgphil.cz/en/concerts-and-tickets",
+      "linkScraper": {
+        "strategy": "simple",
+        "scraperConfig": {
+          "containerSelector": ".vypis-koncertu-item",
+          "linkSelector": ".vypis-ko-obsah-a"
+        }
+      },
+      "contentScraper": {
+        "contentElements": [
+          {
+            "selector": ".container--koncert"
+          }
+        ],
+        "imageSelector": ".kd-obrazek img"
+      },
+      "metadata": {
+        "orchestraName": "Prague Philharmonia"
+      }
+    }
+  ]
+}
