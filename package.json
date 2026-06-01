@@ -1,9 +1,16 @@
 {
-  "name": "scraper-lib",
+  "name": "@janstaffa/scraper-lib",
   "version": "1.0.0",
   "description": "Node.js web scraper library and utility.",
   "main": "./dist/scraper.js",
   "types": "./dist/scraper.d.ts",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/janstaffa/scraper-lib.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"

@@ -16,7 +16,7 @@ node dist/index.js -i <PATH_TO_INPUT_INSTRUCTIONS>
 ### b) Library
 
 ```js
-import { Scraper, type ScraperInstructions } from 'scraperlib';
+import { Scraper, type ScraperInstructions } from 'scraper-lib';
 
 const input = JSON.parse(fs.readFileSync(path.join('./input.json'), 'utf-8')).srcs as ScraperInstructions[];
       
