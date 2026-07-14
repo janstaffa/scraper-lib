@@ -1,6 +1,6 @@
 {
   "name": "@janstaffa/scraper-lib",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Node.js web scraper library and utility.",
   "main": "./dist/scraper.js",
   "types": "./dist/scraper.d.ts",
@@ -18,8 +18,12 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/scraper.js",
-      "types": "./dist/scraper.d.ts"
+      "types": "./dist/scraper.d.ts",
+      "import": "./dist/scraper.js"
+    },
+    "./ti": {
+      "types": "./dist/types/scraper-ti.d.ts",
+      "import": "./dist/types/scraper-ti.js"
     }
   },
   "keywords": [

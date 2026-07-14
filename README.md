@@ -14,9 +14,8 @@ node dist/index.js -i <PATH_TO_INPUT_INSTRUCTIONS>
 ```
 
 ### b) Library
-
-```js
-import { Scraper, type ScraperInstructions } from 'scraper-lib';
+```ts
+import { Scraper, type ScraperInstructions } from '@janstaffa/scraper-lib';
 
 const input = JSON.parse(fs.readFileSync(path.join('./input.json'), 'utf-8')).srcs as ScraperInstructions[];
       
@@ -26,6 +25,9 @@ const result= await scraper.runScraper();
 
 console.log(result)
 ```
+#### Exports
+- **@janstaffa/scraper-lib**: Main API + types 
+- **@janstaffa/scraper-lib/ti**: ts-interface-checker type suite for object validation 
 
 
 ### Input Scraper Instructions

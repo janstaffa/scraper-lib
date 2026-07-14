@@ -12,6 +12,9 @@ import {
   sleep,
 } from './utils.js';
 
+// Reexport types to main API
+export type * from './types/scraper.js';
+
 type LinkScrapingStrategy = LinkScraper['strategy'];
 
 // Generates types for link scraping functions
