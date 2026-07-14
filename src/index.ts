@@ -2,9 +2,12 @@
 import fs from 'fs';
 import { exit } from 'node:process';
 import path from 'path';
-import { Scraper, type ScraperInstructions } from './scraper.js';
+import { Scraper } from './scraper.js';
 
 import commandLineArgs from 'command-line-args';
+import * as t from 'ts-interface-checker';
+import ScraperTypes from './types/scraper-ti.js';
+import type { ScraperInstructions } from './types/scraper.js';
 
 async function run() {
 	try {
@@ -14,10 +17,17 @@ async function run() {
 			{ name: 'testmode', alias: 't', type: Boolean, defaultValue: false },
 			{ name: 'quiet', alias: 'q', type: Boolean, defaultValue: false },
 		]);
-		if (!options['input']) throw 'Invalid options';
+		if (!options['input']) throw new Error('Invalid options');
 
-		const input = JSON.parse(fs.readFileSync(path.join(options.input), 'utf-8'))
-			.srcs as ScraperInstructions[];
+		const { ScraperInstructions } = t.createCheckers(ScraperTypes);
+
+		const input: ScraperInstructions[] | undefined = JSON.parse(
+			fs.readFileSync(path.join(options.input), 'utf-8'),
+		)?.srcs;
+
+		if (!input) throw new Error('Invalid input');
+
+		for (const src of input) ScraperInstructions?.check(src);
 
 		const log = !options['quiet'];
 		if (log) console.log('Loaded scraping instructions.');

@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import type { LinkScraper, ScraperInstructions } from './types/scraper.js';
 import {
   getContentFromPage,
   getImageFromPage,
@@ -11,67 +12,16 @@ import {
   sleep,
 } from './utils.js';
 
-export interface ScraperInstructions {
-	url: string;
-	linkScraper: {
-		strategy: 'simple' | 'paginateURL' | 'paginateButton' | 'infiniteScroll';
-		scraperConfig: object;
-	};
-	contentScraper: {
-		contentElements: {
-			required?: boolean; // Default true
-			selector: string;
-			label?: string;
-			skipFront?: number;
-			skipBack?: number;
-			normalize?: boolean; // Default true
-			trimAfter?: string | string[]; // Remove all characters after the first occurance of the specified string
-			multiple?: boolean; // Default false (if true, all matched elements are scraped)
-			flatten?: boolean;
-		}[];
-		imageSelector?: string;
-	};
-	metadata: { [key: string]: any }; // Gets added to each scraper result
-}
+type LinkScrapingStrategy = LinkScraper['strategy'];
 
+// Generates types for link scraping functions
 type LinkScrapingStrategies = {
-	simple: (
+	[TStrategy in LinkScrapingStrategy]: (
 		url: string,
-		scraperConfig: {
-			containerSelector: string;
-			linkSelector: string;
-		},
-	) => Promise<string[]>;
-
-	paginateURL: (
-		url: string,
-		scraperConfig: {
-			containerSelector: string;
-			linkSelector: string;
-			nextPageQueryParam: string;
-			startingPage?: number;
-			delta?: number;
-			waitMs?: number;
-		},
-	) => Promise<string[]>;
-
-	paginateButton: (
-		url: string,
-		scraperConfig: {
-			containerSelector: string;
-			linkSelector: string;
-			nextPageButtonSelector: string;
-			waitMs?: number;
-		},
-	) => Promise<string[]>;
-
-	infiniteScroll: (
-		url: string,
-		scraperConfig: {
-			containerSelector: string;
-			linkSelector: string;
-			scrollCount: number;
-		},
+		scraperConfig: Extract<
+			LinkScraper,
+			{ strategy: TStrategy }
+		>['scraperConfig'],
 	) => Promise<string[]>;
 };
 
@@ -315,7 +265,6 @@ export class Scraper {
 			}
 		}
 
-    
 		// Shuffle links
 		linksToScrape.sort((_, __) => Math.random() - 0.5);
 
