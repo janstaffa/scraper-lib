@@ -209,11 +209,21 @@ export class Scraper {
 		};
 	}
 
+	/**
+	 * Runs the scraper across all configured sources.
+	 *
+	 * @param ignoreSrcs List of source urls to skip during scraping.
+	 * @param log Whether to log scraping progress and status messages.
+	 * @param testMode Whether to run in test mode (only scrape 1 page per source).
+	 * @param limit Maximum number of sources to scrape. If omitted, all eligible sources are scraped.
+	 * @param scrapingDelay Delay in milliseconds to wait between scraping pages from one sources.
+	 */
 	async runScraper(
 		ignoreSrcs: string[] = [],
 		log = true,
 		testMode = false,
 		limit?: number,
+		scrapingDelay: number = 0,
 	): Promise<ScraperResult[]> {
 		if (!this.page || !this.browser || this.instructions.length === 0)
 			throw 'Scraper not Ready';
@@ -297,6 +307,7 @@ export class Scraper {
 				console.error(`Failed to scrape content from ${url}: `, e);
 				errorCount++;
 			}
+			await sleep(scrapingDelay);
 		}
 		if (log)
 			console.log(
