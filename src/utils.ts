@@ -71,9 +71,22 @@ export const getContentFromPage = async (page: Page, pageQuery: string) => {
 	);
 };
 
+// Tries to first get image from the src property then from computed styles backgroundImage
 export const getImageFromPage = async (page: Page, imageQuery: string) => {
 	const content = await page.$(imageQuery);
-	return (await content?.evaluate((e) => (e as HTMLImageElement).src)) ?? null;
+	return (
+		(await content?.evaluate((e) => {
+			if (e instanceof HTMLImageElement && e.src) return e.src;
+
+			const backgroundImage = getComputedStyle(e).backgroundImage;
+			if (!backgroundImage || backgroundImage === 'none') return null;
+
+			const url = backgroundImage.slice(4, -1).replace(/["']/g, '');
+			if (url === '') return null;
+
+			return url;
+		})) ?? null
+	);
 };
 
 export const isElementHidden = async (el: ElementHandle<Element>) => {

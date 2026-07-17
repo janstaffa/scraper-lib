@@ -30,7 +30,7 @@ async function run() {
 		for (const src of input) ScraperInstructions?.check(src);
 
 		const log = !options['quiet'];
-		if (log) console.log('Loaded scraping instructions.');
+		if (log) console.log(`Loaded scraping instructions with ${input.length} sources`);
 		const scraper = await Scraper.init(input);
 		if (log) console.log('Starting scraping...');
 		const content = await scraper.runScraper([], log, options['testmode']);

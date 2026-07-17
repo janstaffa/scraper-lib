@@ -10,6 +10,7 @@ import {
   removeFromPhrase as removeAfterPhrase,
   removeNewlines,
   sleep,
+  toAbsolutePath,
 } from './utils.js';
 
 // Reexport types to main API
@@ -204,7 +205,7 @@ export class Scraper {
 		return {
 			source: url,
 			content,
-			imageURL,
+			imageURL: imageURL ? toAbsolutePath(imageURL, url) : null,
 			metadata: {},
 		};
 	}
