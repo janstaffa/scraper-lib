@@ -32,6 +32,16 @@ export type LinkScraper =
 				containerSelector: string;
 				linkSelector: string;
 				scrollCount: number;
+				waitMs?: number;
+			};
+	  }
+	| {
+			strategy: 'infiniteScrollBtn';
+			scraperConfig: {
+				containerSelector: string;
+				linkSelector: string;
+				nextPageButtonSelector: string;
+				waitMs?: number;
 			};
 	  };
 

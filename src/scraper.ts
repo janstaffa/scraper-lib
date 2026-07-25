@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import type { LinkScraper, ScraperInstructions } from './types/scraper.js';
 import {
   getContentFromPage,
-  getImageFromPage,
+  getImageSrcFromPage,
   getLinksFromPage,
   getMultiContentFromPage,
   isElementHidden,
@@ -51,6 +51,8 @@ export class Scraper {
 		this.instructions = scrapingInstructions;
 	}
 
+	private PAGINATION_LIMIT = 100;
+
 	static async init(scrapingInstructions: ScraperInstructions[]) {
 		const b = await puppeteer.launch({ headless: true });
 		return new Scraper(b, await b.newPage(), scrapingInstructions);
@@ -58,13 +60,13 @@ export class Scraper {
 	async close() {
 		await this.browser?.close();
 	}
-	private DEFAULT_PAGINATE_WAIT_TIME = 1000;
+	private DEFAULT_PAGINATE_WAIT_TIME = 3000;
 	private linkScrapingStrategies: LinkScrapingStrategies = {
 		/**
 		 * Scrapes all links from the page.
 		 */
 		simple: async (url, scraperConfig) => {
-			if (!this.page || !this.browser) throw 'Scraper not Ready';
+			if (!this.page || !this.browser) throw new Error('Scraper not Ready');
 
 			return await getLinksFromPage(
 				this.page,
@@ -78,7 +80,7 @@ export class Scraper {
 		 * Changes the URL by setting the `scraperConfig.nextPageQueryParam` to `scraperConfig.startingPage` + k * `scraperConfig.delta` untill no more links can be extracted.
 		 */
 		paginateURL: async (url, scraperConfig) => {
-			if (!this.page || !this.browser) throw 'Scraper not Ready';
+			if (!this.page || !this.browser) throw new Error('Scraper not Ready');
 
 			const links: string[] = [];
 
@@ -114,12 +116,14 @@ export class Scraper {
 		 * Clicks the button specified by  `scraperConfig.nextPageButtonSelector` untill no more items can be extracted from the page or the button disappears.
 		 */
 		paginateButton: async (url, scraperConfig) => {
-			if (!this.page || !this.browser) throw 'Scraper not Ready';
+			if (!this.page || !this.browser) throw new Error('Scraper not Ready');
 
 			const links: string[] = [];
 
+			const timeout = scraperConfig.waitMs ?? this.DEFAULT_PAGINATE_WAIT_TIME;
+
 			// Loop over pages until all data is loaded
-			while (true) {
+			for (let i = 0; i < this.PAGINATION_LIMIT; i++) {
 				const ls = await getLinksFromPage(
 					this.page,
 					scraperConfig.containerSelector,
@@ -127,15 +131,35 @@ export class Scraper {
 					url,
 				);
 
-				ls.forEach((l) => links.push(l));
+				links.push(...ls);
 
 				const nextBtn = await this.page.$(scraperConfig.nextPageButtonSelector);
 				if (ls.length === 0 || !nextBtn || (await isElementHidden(nextBtn)))
 					break;
 
+				const navigationPromise = this.page
+					.waitForNavigation({
+						waitUntil: 'networkidle2',
+						timeout,
+					})
+					.catch(() => null); // null = no navigation happened (SPA case), not an error
+
 				// Go to next page
-				await nextBtn.evaluate((el) => (el as HTMLAnchorElement).click());
-				await sleep(scraperConfig.waitMs ?? this.DEFAULT_PAGINATE_WAIT_TIME);
+				await nextBtn.evaluate((el) => (el as HTMLElement).click());
+
+				const navigated = await navigationPromise;
+
+				if (!navigated) {
+					// Wait for the DOM/network to settle instead
+					await this.page
+						.waitForNetworkIdle({
+							idleTime: 500,
+							timeout,
+						})
+						.catch(
+							() => sleep(timeout), // Fallback
+						);
+				}
 			}
 			return links;
 		},
@@ -144,14 +168,42 @@ export class Scraper {
 		 * Scrolls `scraperConfig.scrollCount` times to load all the data, then extracts all at once.
 		 */
 		infiniteScroll: async (url, scraperConfig) => {
-			if (!this.page || !this.browser) throw 'Scraper not Ready';
+			if (!this.page || !this.browser) throw new Error('Scraper not Ready');
+
+			const timeout = scraperConfig.waitMs ?? this.DEFAULT_PAGINATE_WAIT_TIME;
 
 			// Scroll n times (to load infinite scroll)
 			for (let i = 0; i < scraperConfig.scrollCount; i++) {
 				await this.page.evaluate(() => {
 					window.scrollTo(0, document.body.scrollHeight);
 				});
-				await sleep(500);
+				await sleep(timeout);
+			}
+
+			return await getLinksFromPage(
+				this.page,
+				scraperConfig.containerSelector,
+				scraperConfig.linkSelector,
+				url,
+			);
+		},
+
+		/**
+		 * Clicks the button specified by `scraperConfig.nextPageButtonSelector` untill it disapears to load all the data, then extracts all at once.
+		 */
+		infiniteScrollBtn: async (url, scraperConfig) => {
+			if (!this.page || !this.browser) throw new Error('Scraper not Ready');
+
+			const timeout = scraperConfig.waitMs ?? this.DEFAULT_PAGINATE_WAIT_TIME;
+
+			// Click "more" button untill it disapears
+			for (let i = 0; i < this.PAGINATION_LIMIT; i++) {
+        console.log(this.page.url());
+				const nextBtn = await this.page.$(scraperConfig.nextPageButtonSelector);
+				if (!nextBtn || (await isElementHidden(nextBtn))) break;
+
+				await nextBtn.evaluate((el) => (el as HTMLElement).click());
+				await sleep(timeout);
 			}
 
 			return await getLinksFromPage(
@@ -199,7 +251,7 @@ export class Scraper {
 		}
 
 		const imageURL = scraperInstructions.imageSelector
-			? await getImageFromPage(this.page, scraperInstructions.imageSelector)
+			? await getImageSrcFromPage(this.page, scraperInstructions.imageSelector)
 			: null;
 
 		return {

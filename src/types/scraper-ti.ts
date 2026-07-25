@@ -34,6 +34,15 @@ export const LinkScraper = t.union(t.iface([], {
     "containerSelector": "string",
     "linkSelector": "string",
     "scrollCount": "number",
+    "waitMs": t.opt("number"),
+  }),
+}), t.iface([], {
+  "strategy": t.lit('infiniteScrollBtn'),
+  "scraperConfig": t.iface([], {
+    "containerSelector": "string",
+    "linkSelector": "string",
+    "nextPageButtonSelector": "string",
+    "waitMs": t.opt("number"),
   }),
 }));
 

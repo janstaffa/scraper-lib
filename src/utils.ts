@@ -71,22 +71,47 @@ export const getContentFromPage = async (page: Page, pageQuery: string) => {
 	);
 };
 
+const IMAGE_LOAD_TIMEOUT = 5000;
+
 // Tries to first get image from the src property then from computed styles backgroundImage
-export const getImageFromPage = async (page: Page, imageQuery: string) => {
-	const content = await page.$(imageQuery);
-	return (
-		(await content?.evaluate((e) => {
-			if (e instanceof HTMLImageElement && e.src) return e.src;
+export const getImageSrcFromPage = async (page: Page, imageQuery: string) => {
+	const img = await page.$(imageQuery);
+	if (!img) return null;
 
-			const backgroundImage = getComputedStyle(e).backgroundImage;
-			if (!backgroundImage || backgroundImage === 'none') return null;
+	// Scroll in order to ensure load
+	await img.scrollIntoView();
 
-			const url = backgroundImage.slice(4, -1).replace(/["']/g, '');
-			if (url === '') return null;
+	return img.evaluate(async (element, timeout) => {
+		const isValidImageUrl = (url: string | null | undefined) =>
+			!!url && !url.startsWith('data:') && !url.startsWith('blob:');
 
-			return url;
-		})) ?? null
-	);
+		// If element is a image get url from currentSrc/src
+		if (element instanceof HTMLImageElement) {
+			// If not loaded wait for the image to load (or timeout)
+			if (!element.complete) {
+				await Promise.race([
+					// Wait for load
+					new Promise<void>((resolve) => {
+						element.addEventListener('load', () => resolve(), { once: true });
+						element.addEventListener('error', () => resolve(), { once: true });
+					}),
+					// If timeout reached return
+					new Promise<void>((resolve) => setTimeout(resolve, timeout)),
+				]);
+			}
+
+			const url = element.currentSrc || element.src;
+			return isValidImageUrl(url) ? url : null;
+		}
+
+		// Otherwise try to get from css background image
+		const backgroundImage = getComputedStyle(element).backgroundImage;
+		if (!backgroundImage || backgroundImage === 'none') return null;
+
+		const match = backgroundImage.match(/url\(["']?(.*?)["']?\)/);
+		const url = match?.[1];
+		return isValidImageUrl(url) ? url! : null;
+	}, IMAGE_LOAD_TIMEOUT);
 };
 
 export const isElementHidden = async (el: ElementHandle<Element>) => {
